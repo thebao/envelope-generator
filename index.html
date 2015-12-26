@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Envelope Generator</title>
+    <!--
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/bs-switch/css/bootstrap-switch.css" rel="stylesheet">
+    <link href="css/adsr.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/bs-switch/js/bootstrap-switch.js"></script>
+</head>
+<body>       
+    <div class="hidden" id="loader">
+        <div>
+            Processing...
+        </div>
+    </div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Float32Array ADSR Envelope Generator</h1>
+            <h4>Compute a <a href="http://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array" target="_blank" title="What's this?">Float32Array</a> from custom <a href="http://en.wikiaudio.org/ADSR_envelope" target="_blank" title="What's this?">ADSR</a> parameters in order to use with the <a href="http://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API" target="_blank" title="What's this?">Web Audio API</a>
+        </div>
+        <div class="col-sm-6">
+            <h3><i class="fa fa-clock-o"></i> Time <i class="fa fa-question-circle fa-small" data-toggle="tooltip" data-placement="top" title="The duration of each of the parameters"></i></h3>
+            <form id="env-ctrl" class="col-sm-12 well">
+                <div class="form-group col-sm-6"><label>Delay: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration before sound begins"></i><input type="range" name="delay" min="0" max="500" step="1" value="0" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Attack: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration during which sounds increases until reaching maximum level"></i><input type="range" name="attack" min="0" max="500" step="1" value="100" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Hold: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration during which sound remains at maximum level"></i><input type="range" name="hold" min="0" max="500" step="1" value="0" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Decay: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration during which sound decreases to intermediate level"></i><input type="range" name="decay" min="0" max="500" step="1" value="100" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Sustain: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration during which sound remains at intermediate level"></i><input type="range" name="sustain" min="0" max="500" step="1" value="100" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Release: <span class="the-val"></span> <i class="fa fa-question-circle fa-tiny" data-toggle="tooltip" data-placement="top" title="Duration during which sound decreases to silence"></i><input type="range" name="release" min="0" max="500" step="1" value="100" class="form-control"></label></div>
+            </form>
+            <h3><i class="fa fa-expand"></i> Tension <i class="fa fa-question-circle fa-small" data-toggle="tooltip" data-placement="top" title="Acceleration at which each of these phases occur"></i></h3>
+            <form id="env-tns" class="col-sm-12 well">
+                <div class="form-group col-sm-6"><label>Attack: <span class="the-val"></span><input type="range" name="attack-slp" min="0.0" max="1.0" step="0.01" value="0.5" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Decay: <span class="the-val"></span><input type="range" name="decay-slp" min="0.0" max="1.0" step="0.01" value="0.5" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Sustain Level: <span class="the-val"></span><input type="range" name="sustain-slp" min="0.0" max="1.0" step="0.01" value="0.5" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Release: <span class="the-val"></span><input type="range" name="release-slp" min="0.0" max="1.0" step="0.01" value="0.5" class="form-control"></label></div>
+                <div class="form-group col-sm-6"><label>Resolution: <span class="the-val"></span><input type="range" name="resolution" min="10" max="100" step="1" value="75" class="form-control"></label></div>
+
+            </form>
+            <div>
+                <h3><i class="fa fa-tasks"></i> Options</h3>
+                <form id="env-opts" class="col-sm-12 well">
+                    <div class="form-group col-sm-6">
+                        <label><input class="switchy" type="checkbox" name="show-points" checked/> Draw points </label>
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label><input class="switchy" type="checkbox" name="show-warn" checked/> Show warning </label>
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label><input class="switchy" type="checkbox" name="changeName" /> Change name </label>
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <input class="form-control hidden" id="name-wrap" type="text" name="curve-name" value="curve"/>
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="col-sm-12">
+                        <label><input class="switchy" type="checkbox" name="draw-real" /> Draw actual curve </label>
+                    </div>
+                </form>
+            </div>
+        </div>                
+        <div class="col-sm-6">
+            <h3><i class="fa fa-line-chart"></i> Graph</h3>
+            <div id="canvas-wrapper">
+                <canvas height="240" width="480" id="adsr-graph">
+                </canvas>
+            </div>
+            <br/>
+            <div id="sound-warn" class="alert alert-danger">
+                Playing sound at high volume may damage your hearing or speaker system.
+            </div>
+            <div class="form-group">
+                <div id="getCurve" class="btn btn-default"><i class="fa fa-line-chart"></i> Get Curve</div>
+                <div id="playSound" class="btn btn-success"><i class="fa fa-play"></i> Play Oscillator</div>
+            </div>
+            <div class="col-sm-12">
+                <h3>Output</h3>
+                <pre class="hidden" id="output"></pre>
+            </div>
+        </div>
+        <div class="row col-sm-12">
+            
+        </div>
+    </div>
+    <script type="text/javascript" src="js/adsr.js"></script>
+</body>
+</html>
